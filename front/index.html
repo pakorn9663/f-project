@@ -5,21 +5,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบจัดการนักศึกษา</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body>
-    <h1>รายชื่อนักศึกษา</h1>
-    <input type="text" id="search" placeholder="ค้นหา SID หรือชื่อ..." onkeyup="searchStudent()">
-    <ul id="studentList"></ul>
+<body class="bg-light">
+    <div class="container mt-4">
+        <h1 class="text-center text-primary">📚 ระบบจัดการนักศึกษา</h1>
 
-    <h2>เพิ่มนักศึกษา</h2>
-    <input type="text" id="studentSID" placeholder="รหัสนักศึกษา">
-    <input type="text" id="studentName" placeholder="ชื่อนักศึกษา">
-    <button onclick="addStudent()">เพิ่ม</button>
+        <!-- ค้นหา -->
+        <div class="input-group my-3">
+            <input type="text" id="search" class="form-control" placeholder="🔍 ค้นหา SID หรือชื่อ..."
+                onkeyup="searchStudent()">
+            <button class="btn btn-primary" onclick="fetchStudents()">🔄 รีเฟรช</button>
+        </div>
+
+        <!-- ตารางนักศึกษา -->
+        <table class="table table-bordered table-striped text-center">
+            <thead class="table-primary">
+                <tr>
+                    <th>รหัสนักศึกษา (SID)</th>
+                    <th>ชื่อ</th>
+                    <th>การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="studentList"></tbody>
+        </table>
+
+        <!-- ปุ่มเพิ่มนักศึกษา -->
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">➕ เพิ่มนักศึกษา</button>
+    </div>
+
+    <!-- Modal เพิ่มนักศึกษา -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">➕ เพิ่มนักศึกษา</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="studentSID" class="form-control my-2" placeholder="รหัสนักศึกษา">
+                    <input type="text" id="studentName" class="form-control my-2" placeholder="ชื่อนักศึกษา">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" onclick="addStudent()">บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal แก้ไขนักศึกษา -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">✏️ แก้ไขข้อมูลนักศึกษา</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="editId">
+                    <input type="text" id="editSID" class="form-control my-2" placeholder="รหัสนักศึกษา">
+                    <input type="text" id="editName" class="form-control my-2" placeholder="ชื่อนักศึกษา">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning" onclick="updateStudent()">บันทึกการเปลี่ยนแปลง</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         async function fetchStudents() {
-            const res = await fetch("http://localhost:3000/students");
+            const res = await fetch("http://10.53.1.30:3000/students");
             const students = await res.json();
             displayStudents(students);
         }
@@ -28,38 +85,65 @@
             const list = document.getElementById("studentList");
             list.innerHTML = "";
             students.forEach(student => {
-                list.innerHTML += `<li>${student.SID} - ${student.name} 
-                    <button onclick="deleteStudent('${student._id}')">ลบ</button>
-                    <button onclick="updateStudent('${student._id}')">แก้ไข</button>
-                </li>`;
+                list.innerHTML += `
+                    <tr>
+                        <td>${student.SID}</td>
+                        <td>${student.name}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="showEditModal('${student._id}', '${student.SID}', '${student.name}')">✏️ แก้ไข</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${student._id}')">🗑️ ลบ</button>
+                        </td>
+                    </tr>`;
             });
         }
 
         async function addStudent() {
             const SID = document.getElementById("studentSID").value;
             const name = document.getElementById("studentName").value;
+            if (SID === "" || name === "") {
+                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
             await fetch("http://localhost:3000/students", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ SID, name }),
             });
             fetchStudents();
+            document.getElementById("studentSID").value = "";
+            document.getElementById("studentName").value = "";
+            new bootstrap.Modal(document.getElementById('addModal')).hide();
         }
 
         async function deleteStudent(id) {
-            await fetch(`http://localhost:3000/students/${id}`, { method: "DELETE" });
-            fetchStudents();
+            if (confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) {
+                await fetch(`http://localhost:3000/students/${id}`, { method: "DELETE" });
+                fetchStudents();
+            }
         }
 
-        async function updateStudent(id) {
-            const newSID = prompt("แก้ไขรหัสนักศึกษา:");
-            const newName = prompt("แก้ไขชื่อ:");
+        function showEditModal(id, SID, name) {
+            document.getElementById("editId").value = id;
+            document.getElementById("editSID").value = SID;
+            document.getElementById("editName").value = name;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        async function updateStudent() {
+            const id = document.getElementById("editId").value;
+            const SID = document.getElementById("editSID").value;
+            const name = document.getElementById("editName").value;
+            if (SID === "" || name === "") {
+                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
+                return;
+            }
             await fetch(`http://localhost:3000/students/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ SID: newSID, name: newName }),
+                body: JSON.stringify({ SID, name }),
             });
             fetchStudents();
+            new bootstrap.Modal(document.getElementById('editModal')).hide();
         }
 
         async function searchStudent() {
@@ -71,6 +155,8 @@
 
         fetchStudents();
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
