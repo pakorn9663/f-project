@@ -1,83 +1,58 @@
 const express = require("express");
-const { MongoClient, ObjectId } = require("mongodb")
+const mongoose = require("mongoose");
+const cors = require("cors");
+
 const app = express();
+app.use(express.json());
+app.use(cors());
 
-app.use(express.json())
-let db;
-const client = new MongoClient("mongodb://localhost:27017");
-client.connect().then(() => {
-    db = client.db("ecommerce");
-    console.log("MongoDB connected");
-}).catch((err) => {
-    console.log("MongoDB unconnect");
+// เชื่อมต่อ MongoDB
+mongoose.connect("mongodb://localhost:27017/studentDB", {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
 });
 
-
-// ดึงข้อมูลทั้งหมด
-app.get('/product', async (req, res) => {
-    try {
-        const product = await db.collection("product").find().toArray();
-        res.json(product);
-    } catch (err) {
-        res.json("error");
-    }
+// สร้าง Schema และ Model
+const studentSchema = new mongoose.Schema({
+    SID: String,
+    name: String,
 });
 
-app.get('/product/topping/:topping', async (req, res) => {
-    try {
-        const topping = req.params.topping;
-        const product = await db.collection("product").find({
-            "topping": { $in: [{ "name": topping }] }
-        }).toArray();
-        res.json(product);
-    } catch (err) {
-        res.json("error");
-    }
+const Student = mongoose.model("Student", studentSchema);
+
+// ดึงข้อมูลนักศึกษาทั้งหมด
+app.get("/students", async (req, res) => {
+    const students = await Student.find();
+    res.json(students);
 });
 
-
-// ดึงข้อมูลรายการนั้น
-app.get('/product/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const product = await db.collection("product").findOne({
-            "_id": new ObjectId(id)
-        });
-        res.json(product);
-    } catch (err) {
-        res.json("error");
-    }
+// เพิ่มนักศึกษาใหม่
+app.post("/students", async (req, res) => {
+    const newStudent = new Student(req.body);
+    await newStudent.save();
+    res.json(newStudent);
 });
 
-// เพิ่มข้อมูลใหม่
-app.post('/product', async (req, res) => {
-    try {
-        const data = req.body;
-        const product = await db.collection("product").insertOne(data);
-        res.json(product);
-    } catch (err) {
-        res.json("error");
-    }
+// ลบนักศึกษา
+app.delete("/students/:id", async (req, res) => {
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ message: "ลบสำเร็จ" });
 });
 
-// แก้ไขข้อมูล
-app.put('/product/:id', async (req, res) => {
-    try {
-        const id = req.params.id;
-        const data = req.body;
-        const product = await db.collection("product").updateOne({
-            "_id": new ObjectId(id)
-        }, {
-            $set: data
-        });
-        res.json(product);
-    } catch (err) {
-        res.json("error");
-    }
+// แก้ไขข้อมูลนักศึกษา
+app.put("/students/:id", async (req, res) => {
+    const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updatedStudent);
 });
 
-
-
-app.listen(3000, () => {
-    console.log('Server started: success');
+// ค้นหาด้วยชื่อหรือลงท้ายด้วย SID
+app.get("/students/search/:query", async (req, res) => {
+    const query = req.params.query;
+    const result = await Student.find({
+        $or: [{ name: { $regex: query, $options: "i" } }, { SID: { $regex: query, $options: "i" } }],
+    });
+    res.json(result);
 });
+
+// เริ่มเซิร์ฟเวอร์
+app.listen(5000, () => console.log("Server running on port 5000"));

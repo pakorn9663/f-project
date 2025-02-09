@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจัดการนักศึกษา</title>
+</head>
+
+<body>
+    <h1>รายชื่อนักศึกษา</h1>
+    <input type="text" id="search" placeholder="ค้นหา SID หรือชื่อ..." onkeyup="searchStudent()">
+    <ul id="studentList"></ul>
+
+    <h2>เพิ่มนักศึกษา</h2>
+    <input type="text" id="studentSID" placeholder="รหัสนักศึกษา">
+    <input type="text" id="studentName" placeholder="ชื่อนักศึกษา">
+    <button onclick="addStudent()">เพิ่ม</button>
+
+    <script>
+        async function fetchStudents() {
+            const res = await fetch("http://localhost:5000/students");
+            const students = await res.json();
+            displayStudents(students);
+        }
+
+        function displayStudents(students) {
+            const list = document.getElementById("studentList");
+            list.innerHTML = "";
+            students.forEach(student => {
+                list.innerHTML += `<li>${student.SID} - ${student.name} 
+                    <button onclick="deleteStudent('${student._id}')">ลบ</button>
+                    <button onclick="updateStudent('${student._id}')">แก้ไข</button>
+                </li>`;
+            });
+        }
+
+        async function addStudent() {
+            const SID = document.getElementById("studentSID").value;
+            const name = document.getElementById("studentName").value;
+            await fetch("http://localhost:5000/students", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ SID, name }),
+            });
+            fetchStudents();
+        }
+
+        async function deleteStudent(id) {
+            await fetch(`http://localhost:5000/students/${id}`, { method: "DELETE" });
+            fetchStudents();
+        }
+
+        async function updateStudent(id) {
+            const newSID = prompt("แก้ไขรหัสนักศึกษา:");
+            const newName = prompt("แก้ไขชื่อ:");
+            await fetch(`http://localhost:5000/students/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ SID: newSID, name: newName }),
+            });
+            fetchStudents();
+        }
+
+        async function searchStudent() {
+            const query = document.getElementById("search").value;
+            const res = await fetch(`http://localhost:5000/students/search/${query}`);
+            const students = await res.json();
+            displayStudents(students);
+        }
+
+        fetchStudents();
+    </script>
+</body>
+
+</html>
