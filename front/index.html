@@ -1,162 +1,38 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการนักศึกษา</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Student Management System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
 
-<body class="bg-light">
-    <div class="container mt-4">
-        <h1 class="text-center text-primary">📚 ระบบจัดการนักศึกษา</h1>
+<body class="bg-gray-50 p-8">
+    <h1 class="text-3xl font-bold mb-6 text-center">Student Information Management</h1>
 
-        <!-- ค้นหา -->
-        <div class="input-group my-3">
-            <input type="text" id="search" class="form-control" placeholder="🔍 ค้นหา SID หรือชื่อ..."
-                onkeyup="searchStudent()">
-            <button class="btn btn-primary" onclick="fetchStudents()">🔄 รีเฟรช</button>
-        </div>
+    <div class="container mx-auto max-w-4xl bg-white p-6 shadow-md rounded">
+        <h2 class="text-xl font-semibold mb-4">Add New Student</h2>
+        <form id="student-form" class="flex flex-col gap-4">
+            <input type="text" id="name" placeholder="Full Name" class="p-2 border rounded" required />
+            <input type="text" id="sid" placeholder="Student ID" class="p-2 border rounded" required />
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded">Add Student</button>
+        </form>
 
-        <!-- ตารางนักศึกษา -->
-        <table class="table table-bordered table-striped text-center">
-            <thead class="table-primary">
+        <h2 class="text-xl font-semibold mt-8 mb-4">Student List</h2>
+        <table class="w-full border-collapse bg-white">
+            <thead class="bg-gray-200">
                 <tr>
-                    <th>รหัสนักศึกษา (SID)</th>
-                    <th>ชื่อ</th>
-                    <th>การจัดการ</th>
+                    <th class="border p-2">Full Name</th>
+                    <th class="border p-2">Student ID</th>
+                    <th class="border p-2">Actions</th>
                 </tr>
             </thead>
-            <tbody id="studentList"></tbody>
+            <tbody id="student-table"></tbody>
         </table>
-
-        <!-- ปุ่มเพิ่มนักศึกษา -->
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">➕ เพิ่มนักศึกษา</button>
     </div>
 
-    <!-- Modal เพิ่มนักศึกษา -->
-    <div class="modal fade" id="addModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">➕ เพิ่มนักศึกษา</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" id="studentSID" class="form-control my-2" placeholder="รหัสนักศึกษา">
-                    <input type="text" id="studentName" class="form-control my-2" placeholder="ชื่อนักศึกษา">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-success" onclick="addStudent()">บันทึก</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal แก้ไขนักศึกษา -->
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">✏️ แก้ไขข้อมูลนักศึกษา</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editId">
-                    <input type="text" id="editSID" class="form-control my-2" placeholder="รหัสนักศึกษา">
-                    <input type="text" id="editName" class="form-control my-2" placeholder="ชื่อนักศึกษา">
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-warning" onclick="updateStudent()">บันทึกการเปลี่ยนแปลง</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        async function fetchStudents() {
-            const res = await fetch("http://10.53.1.30:3000/students");
-            const students = await res.json();
-            displayStudents(students);
-        }
-
-        function displayStudents(students) {
-            const list = document.getElementById("studentList");
-            list.innerHTML = "";
-            students.forEach(student => {
-                list.innerHTML += `
-                    <tr>
-                        <td>${student.SID}</td>
-                        <td>${student.name}</td>
-                        <td>
-                            <button class="btn btn-warning btn-sm" onclick="showEditModal('${student._id}', '${student.SID}', '${student.name}')">✏️ แก้ไข</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteStudent('${student._id}')">🗑️ ลบ</button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        async function addStudent() {
-            const SID = document.getElementById("studentSID").value;
-            const name = document.getElementById("studentName").value;
-            if (SID === "" || name === "") {
-                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
-                return;
-            }
-            await fetch("http://localhost:3000/students", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ SID, name }),
-            });
-            fetchStudents();
-            document.getElementById("studentSID").value = "";
-            document.getElementById("studentName").value = "";
-            new bootstrap.Modal(document.getElementById('addModal')).hide();
-        }
-
-        async function deleteStudent(id) {
-            if (confirm("คุณต้องการลบข้อมูลนี้ใช่หรือไม่?")) {
-                await fetch(`http://localhost:3000/students/${id}`, { method: "DELETE" });
-                fetchStudents();
-            }
-        }
-
-        function showEditModal(id, SID, name) {
-            document.getElementById("editId").value = id;
-            document.getElementById("editSID").value = SID;
-            document.getElementById("editName").value = name;
-            new bootstrap.Modal(document.getElementById('editModal')).show();
-        }
-
-        async function updateStudent() {
-            const id = document.getElementById("editId").value;
-            const SID = document.getElementById("editSID").value;
-            const name = document.getElementById("editName").value;
-            if (SID === "" || name === "") {
-                alert("❌ กรุณากรอกข้อมูลให้ครบถ้วน");
-                return;
-            }
-            await fetch(`http://localhost:3000/students/${id}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ SID, name }),
-            });
-            fetchStudents();
-            new bootstrap.Modal(document.getElementById('editModal')).hide();
-        }
-
-        async function searchStudent() {
-            const query = document.getElementById("search").value;
-            const res = await fetch(`http://localhost:3000/students/search/${query}`);
-            const students = await res.json();
-            displayStudents(students);
-        }
-
-        fetchStudents();
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>
