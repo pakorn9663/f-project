@@ -55,4 +55,4 @@ app.get("/students/search/:query", async (req, res) => {
 });
 
 // เริ่มเซิร์ฟเวอร์
-app.listen(5000, () => console.log("Server running on port 5000"));
+app.listen(3000, () => console.log("Server running on port 3000"));

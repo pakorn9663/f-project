@@ -19,7 +19,7 @@
 
     <script>
         async function fetchStudents() {
-            const res = await fetch("http://localhost:5000/students");
+            const res = await fetch("http://localhost:3000/students");
             const students = await res.json();
             displayStudents(students);
         }
@@ -38,7 +38,7 @@
         async function addStudent() {
             const SID = document.getElementById("studentSID").value;
             const name = document.getElementById("studentName").value;
-            await fetch("http://localhost:5000/students", {
+            await fetch("http://localhost:3000/students", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ SID, name }),
@@ -47,14 +47,14 @@
         }
 
         async function deleteStudent(id) {
-            await fetch(`http://localhost:5000/students/${id}`, { method: "DELETE" });
+            await fetch(`http://localhost:3000/students/${id}`, { method: "DELETE" });
             fetchStudents();
         }
 
         async function updateStudent(id) {
             const newSID = prompt("แก้ไขรหัสนักศึกษา:");
             const newName = prompt("แก้ไขชื่อ:");
-            await fetch(`http://localhost:5000/students/${id}`, {
+            await fetch(`http://localhost:3000/students/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ SID: newSID, name: newName }),
@@ -64,7 +64,7 @@
 
         async function searchStudent() {
             const query = document.getElementById("search").value;
-            const res = await fetch(`http://localhost:5000/students/search/${query}`);
+            const res = await fetch(`http://localhost:3000/students/search/${query}`);
             const students = await res.json();
             displayStudents(students);
         }
